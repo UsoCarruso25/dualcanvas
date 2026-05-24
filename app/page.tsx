@@ -1,188 +1,321 @@
 'use client';
 
 import { useState } from 'react';
-import EmojiPicker from 'emoji-picker-react';
+
+// Banco de palabras para adivinar
+const PALABRAS = [
+  { palabra: "manzana", emojis: "🍎", pista: "Fruta roja o verde" },
+  { palabra: "perro", emojis: "🐕", pista: "Mejor amigo del hombre" },
+  { palabra: "gato", emojis: "🐈", pista: "Maúlla" },
+  { palabra: "pizza", emojis: "🍕", pista: "Comida italiana con queso" },
+  { palabra: "futbol", emojis: "⚽", pista: "Deporte con balón" },
+  { palabra: "cine", emojis: "🎬", pista: "Donde ves películas" },
+  { palabra: "música", emojis: "🎵", pista: "Se escucha con los oídos" },
+  { palabra: "playa", emojis: "🏖️", pista: "Arena y mar" },
+  { palabra: "avión", emojis: "✈️", pista: "Vuela por el cielo" },
+  { palabra: "computadora", emojis: "💻", pista: "Sirve para trabajar o jugar" },
+];
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'tab1' | 'tab2' | 'result'>('tab1');
+  const [activeTab, setActiveTab] = useState('tab1');
   
-  // Canvas 1 y 2 (matrices 8x8)
-  const [canvas1, setCanvas1] = useState<string[][]>(
-    Array(8).fill(null).map(() => Array(8).fill('⬜'))
-  );
-  const [canvas2, setCanvas2] = useState<string[][]>(
-    Array(8).fill(null).map(() => Array(8).fill('⬜'))
-  );
+  // Estado del juego 1
+  const [palabraActual1, setPalabraActual1] = useState(PALABRAS[0]);
+  const [respuesta1, setRespuesta1] = useState('');
+  const [mensaje1, setMensaje1] = useState('');
+  const [puntaje1, setPuntaje1] = useState(0);
+  const [indice1, setIndice1] = useState(0);
   
-  const [selectedEmoji, setSelectedEmoji] = useState('😊');
-  const [showPicker, setShowPicker] = useState(false);
-  const [currentCanvas, setCurrentCanvas] = useState<'tab1' | 'tab2'>('tab1');
-  const [savedObjects, setSavedObjects] = useState<{canvas1: string[][], canvas2: string[][], merged: string}[]>([]);
+  // Estado del juego 2
+  const [palabraActual2, setPalabraActual2] = useState(PALABRAS[0]);
+  const [respuesta2, setRespuesta2] = useState('');
+  const [mensaje2, setMensaje2] = useState('');
+  const [puntaje2, setPuntaje2] = useState(0);
+  const [indice2, setIndice2] = useState(0);
+  
+  // Objetos guardados (rondas ganadas)
+  const [rondasGuardadas, setRondasGuardadas] = useState<any[]>([]);
 
-  const handleCellClick = (row: number, col: number) => {
-    if (currentCanvas === 'tab1') {
-      const newCanvas = [...canvas1];
-      newCanvas[row][col] = selectedEmoji;
-      setCanvas1(newCanvas);
+  // Verificar respuesta Jugador 1
+  const verificar1 = () => {
+    if (respuesta1.toLowerCase() === palabraActual1.palabra) {
+      setMensaje1('✅ ¡Correcto! +1 punto');
+      setPuntaje1(puntaje1 + 1);
+      siguientePalabra(1);
     } else {
-      const newCanvas = [...canvas2];
-      newCanvas[row][col] = selectedEmoji;
-      setCanvas2(newCanvas);
+      setMensaje1(`❌ Incorrecto. Era: ${palabraActual1.palabra}`);
+      setTimeout(() => {
+        siguientePalabra(1);
+      }, 1500);
+    }
+    setRespuesta1('');
+  };
+
+  // Verificar respuesta Jugador 2
+  const verificar2 = () => {
+    if (respuesta2.toLowerCase() === palabraActual2.palabra) {
+      setMensaje2('✅ ¡Correcto! +1 punto');
+      setPuntaje2(puntaje2 + 1);
+      siguientePalabra(2);
+    } else {
+      setMensaje2(`❌ Incorrecto. Era: ${palabraActual2.palabra}`);
+      setTimeout(() => {
+        siguientePalabra(2);
+      }, 1500);
+    }
+    setRespuesta2('');
+  };
+
+  // Siguiente palabra
+  const siguientePalabra = (jugador: 1 | 2) => {
+    if (jugador === 1) {
+      const nuevoIndice = (indice1 + 1) % PALABRAS.length;
+      setIndice1(nuevoIndice);
+      setPalabraActual1(PALABRAS[nuevoIndice]);
+      setMensaje1('');
+    } else {
+      const nuevoIndice = (indice2 + 1) % PALABRAS.length;
+      setIndice2(nuevoIndice);
+      setPalabraActual2(PALABRAS[nuevoIndice]);
+      setMensaje2('');
     }
   };
 
-  const saveObject = () => {
-    // Crear objeto fusionado (combinación visual)
-    let merged = '';
-    for (let i = 0; i < 8; i++) {
-      for (let j = 0; j < 8; j++) {
-        if (canvas1[i][j] !== '⬜' && canvas2[i][j] !== '⬜') {
-          merged += canvas1[i][j];
-        } else if (canvas1[i][j] !== '⬜') {
-          merged += canvas1[i][j];
-        } else {
-          merged += canvas2[i][j];
-        }
-      }
-      merged += '\n';
+  // Reiniciar juego
+  const reiniciarJuego = (jugador: 1 | 2) => {
+    if (jugador === 1) {
+      setPuntaje1(0);
+      setIndice1(0);
+      setPalabraActual1(PALABRAS[0]);
+      setRespuesta1('');
+      setMensaje1('');
+    } else {
+      setPuntaje2(0);
+      setIndice2(0);
+      setPalabraActual2(PALABRAS[0]);
+      setRespuesta2('');
+      setMensaje2('');
     }
-    
-    setSavedObjects([...savedObjects, { canvas1, canvas2, merged }]);
-    alert('✅ Objeto compartido guardado!');
   };
 
-  const renderCanvas = (canvas: string[][], isEditable: boolean) => (
-    <div className="grid grid-cols-8 gap-1">
-      {canvas.map((row, i) =>
-        row.map((cell, j) => (
-          <button
-            key={`${i}-${j}`}
-            onClick={() => isEditable && handleCellClick(i, j)}
-            className="w-14 h-14 text-2xl border border-gray-300 hover:bg-gray-100 transition flex items-center justify-center"
-            disabled={!isEditable}
-          >
-            {cell}
-          </button>
-        ))
-      )}
-    </div>
-  );
+  // Guardar objeto (ronda final con puntajes)
+  const guardarObjeto = () => {
+    const objeto = {
+      puntaje1: puntaje1,
+      puntaje2: puntaje2,
+      ganador: puntaje1 > puntaje2 ? 'Jugador 1' : puntaje2 > puntaje1 ? 'Jugador 2' : 'Empate',
+      fecha: new Date().toLocaleTimeString(),
+      totalRondas: indice1
+    };
+    setRondasGuardadas([...rondasGuardadas, objeto]);
+    alert('✅ Partida guardada!');
+  };
+
+  // Hacer fork (cargar una partida guardada)
+  const hacerFork = (partida: any) => {
+    setPuntaje1(partida.puntaje1);
+    setPuntaje2(partida.puntaje2);
+    alert(`🔀 Fork creado! Partida del ${partida.fecha}`);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 to-purple-200">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-green-200">
+      
+      {/* Encabezado */}
       <header className="bg-white shadow p-4">
-        <h1 className="text-2xl font-bold text-center text-purple-600">✏️🎨 Dual Canvas PWA</h1>
-        <p className="text-center text-sm text-gray-600">Dibuja con emojis en parejas</p>
+        <h1 className="text-3xl font-bold text-center text-blue-600">
+          🤔 Adivina el Emoji
+        </h1>
+        <p className="text-center text-gray-500 text-sm">
+          ¿Quién adivina más palabras?
+        </p>
       </header>
 
       <div className="max-w-6xl mx-auto p-4">
+        
         {/* Tabs */}
-        <div className="flex gap-2 border-b mb-4">
+        <div className="flex gap-2 mb-4">
           <button
-            onClick={() => { setActiveTab('tab1'); setCurrentCanvas('tab1'); }}
-            className={`px-4 py-2 ${activeTab === 'tab1' ? 'border-b-2 border-pink-500 text-pink-600 font-bold' : ''}`}
+            onClick={() => setActiveTab('tab1')}
+            className={`flex-1 py-3 rounded-lg font-bold transition ${
+              activeTab === 'tab1' 
+                ? 'bg-blue-500 text-white shadow-lg' 
+                : 'bg-white text-blue-500 hover:bg-blue-100'
+            }`}
           >
-            🎨 Pestaña 1: Mi Lienzo
+            🎮 Jugador 1
           </button>
           <button
-            onClick={() => { setActiveTab('tab2'); setCurrentCanvas('tab2'); }}
-            className={`px-4 py-2 ${activeTab === 'tab2' ? 'border-b-2 border-purple-500 text-purple-600 font-bold' : ''}`}
+            onClick={() => setActiveTab('tab2')}
+            className={`flex-1 py-3 rounded-lg font-bold transition ${
+              activeTab === 'tab2' 
+                ? 'bg-green-500 text-white shadow-lg' 
+                : 'bg-white text-green-500 hover:bg-green-100'
+            }`}
           >
-            🖌️ Pestaña 2: Lienzo Pareja
+            🎯 Jugador 2
           </button>
           <button
-            onClick={() => setActiveTab('result')}
-            className={`px-4 py-2 ${activeTab === 'result' ? 'border-b-2 border-green-500 text-green-600 font-bold' : ''}`}
+            onClick={() => setActiveTab('objeto')}
+            className={`flex-1 py-3 rounded-lg font-bold transition ${
+              activeTab === 'objeto' 
+                ? 'bg-purple-500 text-white shadow-lg' 
+                : 'bg-white text-purple-500 hover:bg-purple-100'
+            }`}
           >
-            🌟 Objeto Compartido
+            🏆 Objeto Final
           </button>
         </div>
 
-        {/* Selector de emoji (visible en pestañas 1 y 2) */}
-        {(activeTab === 'tab1' || activeTab === 'tab2') && (
-          <div className="mb-4 flex gap-2 items-center">
-            <button
-              onClick={() => setShowPicker(!showPicker)}
-              className="px-4 py-2 bg-purple-500 text-white rounded-lg text-2xl"
-            >
-              {selectedEmoji} 🖌️
-            </button>
-            <span className="text-sm text-gray-600">Pincel actual</span>
-          </div>
-        )}
-
-        {showPicker && (
-          <div className="absolute z-10">
-            <EmojiPicker
-              onEmojiClick={(emoji) => {
-                setSelectedEmoji(emoji.emoji);
-                setShowPicker(false);
-              }}
-            />
-          </div>
-        )}
-
-        {/* Pestaña 1 */}
+        {/* Panel Jugador 1 */}
         {activeTab === 'tab1' && (
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h2 className="text-xl font-bold mb-4">🎨 Tu creación con emojis</h2>
-            {renderCanvas(canvas1, true)}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-blue-600">🎮 Jugador 1</h2>
+              <div className="text-xl font-bold">⭐ Puntaje: {puntaje1}</div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-8 text-center mb-6">
+              <p className="text-gray-500 mb-2">¿Qué palabra representa estos emojis?</p>
+              <div className="text-8xl my-6">{palabraActual1.emojis}</div>
+              <p className="text-sm text-gray-500">📌 Pista: {palabraActual1.pista}</p>
+            </div>
+            
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={respuesta1}
+                onChange={(e) => setRespuesta1(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && verificar1()}
+                placeholder="Escribe tu respuesta..."
+                className="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+              <button
+                onClick={verificar1}
+                className="px-6 py-3 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600"
+              >
+                Adivinar
+              </button>
+            </div>
+            
+            {mensaje1 && (
+              <div className={`mt-4 p-3 rounded-lg text-center ${mensaje1.includes('Correcto') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                {mensaje1}
+              </div>
+            )}
+            
             <button
-              onClick={() => setCanvas1(Array(8).fill(null).map(() => Array(8).fill('⬜')))}
-              className="mt-4 px-4 py-2 bg-gray-500 text-white rounded"
+              onClick={() => reiniciarJuego(1)}
+              className="mt-4 w-full py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600"
             >
-              🧹 Limpiar mi lienzo
+              🔄 Reiniciar mi juego
             </button>
           </div>
         )}
 
-        {/* Pestaña 2 */}
+        {/* Panel Jugador 2 */}
         {activeTab === 'tab2' && (
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h2 className="text-xl font-bold mb-4">🖌️ La creación de tu pareja</h2>
-            {renderCanvas(canvas2, true)}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-green-600">🎯 Jugador 2</h2>
+              <div className="text-xl font-bold">⭐ Puntaje: {puntaje2}</div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-8 text-center mb-6">
+              <p className="text-gray-500 mb-2">¿Qué palabra representa estos emojis?</p>
+              <div className="text-8xl my-6">{palabraActual2.emojis}</div>
+              <p className="text-sm text-gray-500">📌 Pista: {palabraActual2.pista}</p>
+            </div>
+            
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={respuesta2}
+                onChange={(e) => setRespuesta2(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && verificar2()}
+                placeholder="Escribe tu respuesta..."
+                className="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+              <button
+                onClick={verificar2}
+                className="px-6 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600"
+              >
+                Adivinar
+              </button>
+            </div>
+            
+            {mensaje2 && (
+              <div className={`mt-4 p-3 rounded-lg text-center ${mensaje2.includes('Correcto') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                {mensaje2}
+              </div>
+            )}
+            
             <button
-              onClick={() => setCanvas2(Array(8).fill(null).map(() => Array(8).fill('⬜')))}
-              className="mt-4 px-4 py-2 bg-gray-500 text-white rounded"
+              onClick={() => reiniciarJuego(2)}
+              className="mt-4 w-full py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600"
             >
-              🧹 Limpiar lienzo pareja
+              🔄 Reiniciar mi juego
             </button>
           </div>
         )}
 
-        {/* Objeto Compartido */}
-        {activeTab === 'result' && (
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h2 className="text-xl font-bold mb-4">🌟 Objeto Final Compartido</h2>
-            <div className="p-6 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg">
-              <div className="grid grid-cols-8 gap-1">
-                {canvas1.map((row, i) =>
-                  row.map((cell, j) => {
-                    const cell2 = canvas2[i][j];
-                    let finalEmoji = cell;
-                    if (cell !== '⬜' && cell2 !== '⬜') finalEmoji = '💞';
-                    else if (cell2 !== '⬜') finalEmoji = cell2;
-                    return (
-                      <div key={`result-${i}-${j}`} className="w-14 h-14 text-2xl border border-gray-200 flex items-center justify-center bg-white">
-                        {finalEmoji}
-                      </div>
-                    );
-                  })
-                )}
+        {/* Objeto Final / Resultados */}
+        {activeTab === 'objeto' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-center mb-6">🏆 Resultado Final</h2>
+            
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <div className="bg-blue-50 rounded-xl p-6 text-center">
+                <p className="text-4xl mb-2">🎮</p>
+                <p className="font-bold text-blue-600">Jugador 1</p>
+                <p className="text-3xl font-bold mt-2">{puntaje1}</p>
+                <p className="text-sm text-gray-500">puntos</p>
+              </div>
+              
+              <div className="bg-green-50 rounded-xl p-6 text-center">
+                <p className="text-4xl mb-2">🎯</p>
+                <p className="font-bold text-green-600">Jugador 2</p>
+                <p className="text-3xl font-bold mt-2">{puntaje2}</p>
+                <p className="text-sm text-gray-500">puntos</p>
               </div>
             </div>
             
-            <button onClick={saveObject} className="mt-4 w-full bg-green-500 text-white p-3 rounded-lg">
-              💾 Guardar Objeto Compartido
+            <div className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-xl p-6 text-center mb-6">
+              <p className="text-xl font-bold">
+                🏅 Ganador: {puntaje1 > puntaje2 ? 'Jugador 1' : puntaje2 > puntaje1 ? 'Jugador 2' : 'Empate'}
+              </p>
+            </div>
+
+            <button
+              onClick={guardarObjeto}
+              className="w-full bg-purple-500 text-white py-3 rounded-lg font-bold hover:bg-purple-600 transition mb-4"
+            >
+              💾 Guardar esta Partida
             </button>
 
-            {savedObjects.length > 0 && (
-              <div className="mt-6">
-                <h3 className="font-bold mb-2">📦 Objetos guardados ({savedObjects.length})</h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {savedObjects.map((obj, idx) => (
-                    <div key={idx} className="p-2 bg-gray-50 rounded border text-sm">
-                      <pre className="text-xs">{obj.merged.substring(0, 100)}...</pre>
+            {/* Partidas guardadas (para Fork) */}
+            {rondasGuardadas.length > 0 && (
+              <div className="mt-4">
+                <h3 className="font-bold mb-3 flex items-center gap-2">
+                  🔀 Partidas Guardadas ({rondasGuardadas.length})
+                </h3>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {rondasGuardadas.map((partida, idx) => (
+                    <div key={idx} className="p-3 bg-gray-50 rounded-lg border flex justify-between items-center">
+                      <div>
+                        <div className="flex gap-4 text-sm">
+                          <span>🎮 {partida.puntaje1}</span>
+                          <span>🎯 {partida.puntaje2}</span>
+                          <span className="font-bold text-purple-600">🏆 {partida.ganador}</span>
+                        </div>
+                        <p className="text-xs text-gray-500">{partida.fecha}</p>
+                      </div>
+                      <button
+                        onClick={() => hacerFork(partida)}
+                        className="px-3 py-1 bg-purple-500 text-white rounded text-sm hover:bg-purple-600"
+                      >
+                        🔀 Fork
+                      </button>
                     </div>
                   ))}
                 </div>
