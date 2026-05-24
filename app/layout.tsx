@@ -16,14 +16,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SWRegistration />
         <nav className="bg-purple-600 text-white p-3 flex gap-4 justify-center">
-          <Link href="/" className="hover:underline">🏠 Dual Canvas</Link>
-          <Link href="/fusion" className="hover:underline">🧪 Calculadora Fusión</Link>
-        </nav>
-        {children}
-        <nav className="bg-purple-600 text-white p-3 flex gap-4 justify-center">
   <Link href="/">🎨 Dual Canvas</Link>
   <Link href="/emoji-canvas">😊 Emoji Canvas Libre</Link>
 </nav>
+        {children}
+        
       </body>
     </html>
 
