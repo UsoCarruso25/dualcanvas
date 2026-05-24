@@ -20,7 +20,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Link href="/fusion" className="hover:underline">🧪 Calculadora Fusión</Link>
         </nav>
         {children}
+        <nav className="bg-purple-600 text-white p-3 flex gap-4 justify-center">
+  <Link href="/">🎨 Dual Canvas</Link>
+  <Link href="/emoji-canvas">😊 Emoji Canvas Libre</Link>
+</nav>
       </body>
     </html>
+
+    
   );
 }
