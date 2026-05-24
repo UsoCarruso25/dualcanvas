@@ -1,0 +1,23 @@
+{
+  "name": "Dual Canvas PWA",
+  "short_name": "DualCanvas",
+  "description": "Crea objetos compartidos en parejas",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdf2f8",
+  "theme_color": "#a855f7",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/189/189253.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/189/189253.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
