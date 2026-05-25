@@ -21,7 +21,7 @@ export default function Home() {
     fondo: '⬜'
   });
   
-  // Emoji 2 (pareja)
+  // Emoji 2. (pareja)
   const [emoji2, setEmoji2] = useState({
     ojos: '😍',
     boca: '😂',
